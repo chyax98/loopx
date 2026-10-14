@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Exercise the shipped delivery view with synthetic status and read-only API fixtures.
+// Exercise owner contract readback and unavailable operation controls with synthetic sources.
 import assert from "node:assert/strict";
 import {mkdir} from "node:fs/promises";
 import { execFileSync, spawn } from "node:child_process";
@@ -41,7 +41,9 @@ try {
     let responseStatus = 200;
     await page.addInitScript(language => localStorage.setItem("loopx-pw-locale", language), locale);
     await page.route("**/api/**", route => {
-      if (route.request().method() !== "GET") writes.push(route.request().url());
+      // Model-option discovery is an existing read-only POST. Every effect
+      // endpoint, including the new acceptance operation, remains in this ledger.
+      if (route.request().method() !== "GET" && new URL(route.request().url()).pathname !== "/api/chat/agent-model-options") writes.push(route.request().url());
       return route.fulfill({ status: 404, json: { error: "Unavailable in read-only fixture" } });
     });
     await page.route(url => url.pathname === "/status.json", route => route.fulfill({ json: payload }));
@@ -106,9 +108,10 @@ try {
     const text = await section.innerText();
     for (const value of [contract.objective, contract.digest, "release-demo", "todo_confirmed", "todo_unbound", "todo_stale", "recovery"]) assert.ok(text.includes(value));
     for (const value of locale === "en" ? ["Task association confirmed", "Task association missing", "Task association stale", "Task associations require confirmation", "Outside the current task gate"] : ["任务关联已确认", "任务关联缺失", "任务关联已过期", "任务关联需要确认", "不属于当前任务门禁范围"]) assert.ok(text.includes(value), value);
-    assert.equal(await section.locator("button,input,select,textarea").count(), 0, "Readback must offer no mutation controls");
+    assert.equal(await section.getByRole("button", {name: locale === "en" ? "Run configured checks" : "运行已配置的检查", exact: true}).isDisabled(), true,
+      "An unavailable current authority must not enable a command from the retained snapshot");
     await section.locator("details > summary").last().click();
-    await section.getByText(locale === "en" ? /The local Goal owner/ : /本地 Goal 所有者/).waitFor();
+    await section.getByText(locale === "en" ? /Import the complete/ : /可在下方导入/).waitFor();
     for (const [status, en, zh] of [["unverified", "Artifact checks not verified", "产物检查未验证"], ["failed", "Artifact checks failed", "产物检查失败"], ["stale", "Artifact checks stale", "产物检查已过期"], ["partial", "Task checks passed; Goal-wide verification unknown", "任务检查通过；Goal 整体验证未知"], ["accepted", "Artifact checks passed", "产物检查通过"]]) {
       await refreshSnapshot(verifiedContract(status));
       await section.getByText(locale === "en" ? en : zh, { exact: true }).waitFor();

@@ -95,3 +95,10 @@
 
 
 .delivery-notice summary { cursor: pointer; min-height: 24px; }
+
+.delivery-acceptance-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.delivery-acceptance-controls label, .delivery-acceptance-controls details { flex-basis: 100%; min-width: 0; }
+.delivery-acceptance-controls input { display: block; max-width: 100%; margin-block-start: var(--space-2); }
+.delivery-acceptance-controls pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 20rem; overflow: auto; }
+.delivery-oracle-evidence { margin-block: var(--space-3); overflow-wrap: anywhere; }
+.delivery-oracle-evidence code { overflow-wrap: anywhere; word-break: break-word; }

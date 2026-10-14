@@ -1,3 +1,4 @@
+import {GoalOracleEvidence} from "./goal-oracle-evidence";
 import {GoalTeamLineage} from "./goal-team-lineage";
 import {GoalTeamEpisode} from "./goal-team-episode";
 import {GoalTeamComparison} from "./goal-team-comparison";
@@ -148,6 +149,7 @@ export function GoalTeamEvidence({sessionId, operationId, zh, canMessage, ingres
             <p>{zh ? "检查前后保持一致的产物版本" : "Output versions unchanged across these checks"}</p>
             {checkedOutputs!.map(row => <p key={row.ref}>{row.ref}{" · "}<code>{row.sha256}</code></p>)}
           </> : <p>{zh ? "未提供与当前产物匹配的检查时间及版本记录。" : "Check time and version records matching this report are unavailable."}</p>}
+          {result.validation.oracle_checks?.map(check => <GoalOracleEvidence key={check.criterion_id} evidence={check} zh={zh}/>)}
           <code>{result.validation.basis_sha256}</code>
         </> : <p>{zh ? "此运行时未提供验收依据标识。" : "This runtime did not provide the validation basis identity."}</p>}
       </details> : null}
