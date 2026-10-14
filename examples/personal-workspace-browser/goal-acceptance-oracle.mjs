@@ -56,6 +56,8 @@ try {
   await run.click();
   await panel.getByText("当前版本已核对", {exact: false}).waitFor();
   assert.equal(read().goal_acceptance_contract.criteria[0].oracle.state, "current");
+  await panel.locator(".delivery-acceptance-controls").scrollIntoViewIfNeeded();
+  await page.screenshot({path: resolve(outputDir, "oracle-controls-desktop.png"), animations: "disabled"});
   await panel.getByText("已记录的产物检查", {exact: true}).click();
   await panel.getByText("查看来源与实际检查版本", {exact: true}).click();
   await page.screenshot({path: resolve(outputDir, "oracle-current-desktop.png"), animations: "disabled"});
@@ -63,6 +65,8 @@ try {
   await page.emulateMedia({reducedMotion: "reduce"});
   await page.screenshot({path: resolve(outputDir, "oracle-current-mobile.png"), animations: "disabled"});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await panel.locator(".delivery-acceptance-controls").scrollIntoViewIfNeeded();
+  await page.screenshot({path: resolve(outputDir, "oracle-controls-mobile.png"), animations: "disabled"});
   await writeFile(resolve(root, "project/result.txt"), "new version without verification");
   const refresh = panel.getByRole("button", {name: "读回当前合同", exact: true});
   await refresh.focus(); await page.keyboard.press("Enter");
