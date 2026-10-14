@@ -450,3 +450,106 @@ TS 校验整个候选工作声明的摘要必须等于 owner 当初确认的摘�
 必须提供真实的原文本/等待条件。若不知道原声明、改动涉及其他字段，或后续兼容修订
 使完整摘要无法精确匹配，应请 owner 审核并显式重新绑定。不能猜测旧值、伪造完成，
 也不能先取得 stale 工作的租约来绕过这条边界。
+
+
+## Owner-pinned oracle and exact versions
+
+In **Goal settings → Task ownership → Goal acceptance contract**, the local owner
+can import a complete approved JSON document, review its scope and command,
+save it, run the configured checks, read back the result, or disable the contract.
+Existing configured contracts offer the same operations in **Delivery & evidence**.
+Saving does not run a command. Reading does not run checks. Failed or uncertain
+operations retain a readback/retry path; an uncertain check is never replayed
+automatically. These actions use the existing acceptance owner and provider CAS.
+Agent callers still cannot configure the owner's contract or submit a verdict.
+
+An optional criterion `oracle` declares an **owner-pinned checker**, rather than
+inferring independent acceptance from a worker's name, report or artifact hash:
+
+```json
+{
+  "kind": "owner_pinned_oracle",
+  "source_id": "export-checker",
+  "input_refs": ["expected.txt"],
+  "output_refs": ["result.txt"]
+}
+```
+
+Add this object to a criterion in the existing document format. That criterion
+must explicitly pin the invoked checker in `validation_files`, with its actual
+SHA-256, and invoke that file directly or as the interpreter's script argument.
+For example, use `validation_argv: ["python3", "checks/export.py"]` with a pin for
+`checks/export.py`. Inline `-c` commands cannot attest a different pinned file. A directly executed
+checker needs a relative path containing `/` (for example `checks/export`), not
+a bare name resolved through `PATH`; an interpreter script argument cannot be an
+option beginning with `-`.
+Declare every input/output file whose version the receipt is meant to cover;
+there must be at least one output. Source, input and output roles are distinct.
+All refs are bounded repository-relative files; symlinks and unavailable files
+fail closed. Ordinary criteria without `oracle` retain their previous execution,
+canonical document bytes and result shape.
+
+The host copies the pinned source and declared inputs/outputs into a temporary
+workspace, verifies their bytes, executes the approved command there, and checks
+those copies and the original workspace again before returning evidence. The
+successful criterion result contains `oracle_evidence`: source identity and
+digest, UTC check time, and exact input/output SHA-256 versions. A changed or
+missing source/output, failed check or timeout does not produce a success
+receipt. Completion still has its existing fresh checks and transaction; an
+ordinary completion receipt is not substituted for this explicit oracle record.
+
+This is file-snapshot isolation, **not an OS sandbox**. The local interpreter,
+environment, external services and unpinned imports remain trusted host inputs.
+The owner must approve the checker's meaning, provenance and any effects before
+running it. The source label is not an authenticated remote reviewer's identity;
+file hashes do not prove independent authorship. The checker record does not
+resolve an objection, establish requester adoption, or complete a Goal.
+
+`goal-acceptance inspect` observes current files without executing checks. It
+shows `current` only when the current contract/work, pinned source and declared
+versions match the stored receipt. Changed bytes show `stale`; unavailable files
+or missing receipts cannot become current success. Raw canonical/status snapshots
+without host file observations show `recorded`, which does not certify current
+bytes. Delegation evidence includes the checker only when the acceptance owner
+observed it current and its tested outputs cover that execution's exact outputs.
+Requester adoption remains a separate record.
+
+The same local-owner journey is available through the existing CLI:
+
+```sh
+loopx --format json goal-acceptance inspect --goal-id GOAL
+loopx --format json goal-acceptance configure --goal-id GOAL --document owner-contract.json --expected-provider-revision REVISION --execute
+loopx --format json goal-acceptance verify --goal-id GOAL --execute
+loopx --format json goal-acceptance inspect --goal-id GOAL
+loopx --format json goal-acceptance disable --goal-id GOAL --expected-provider-revision CURRENT_REVISION --execute
+```
+
+Use revision tokens from fresh inspect results. Disable withdraws the current
+contract and current oracle projection while retaining historical evidence;
+removing every `oracle` through an explicit owner reconfiguration restores
+ordinary criterion behavior and withdraws the current oracle receipt. The immutable
+operation journal retains its historical evidence; ordinary checks must run again.
+Before downgrading to a runtime that predates this optional field, use the newer
+runtime to configure that ordinary document with a fresh revision, inspect the
+result, then optionally disable. Disable alone retains the newer document and is
+not a backward-format migration. This enables no worker, model, transport, budget
+or permission.
+Local HTTP operations share the same owner through `/api/chat/goal-acceptance`;
+remote/missing authority and stale revisions remain explicit failures.
+
+The packaged regression runs the settings journey against a disposable real
+SQLite/HTTP/CLI source, including changed output, failure/recovery, disable,
+390px and keyboard/reduced-motion:
+
+```sh
+uv run --extra test python scripts/chat_bundle.py build --install
+LOOPX_PERSONAL_WORKSPACE_PACKAGED=1 LOOPX_PLAYWRIGHT_PACKAGE="$PWD/apps/presentation/dashboard/node_modules/playwright" uv run --extra test node examples/personal-workspace-browser/goal-acceptance-oracle.mjs
+```
+
+Workspace discovery in this regression is synthetic; it does not establish
+installed-App adoption or the live L1 correction episode.
+
+
+Synthetic packaged views of the actual local-owner interaction (not an installed
+App or live team): [desktop](../../examples/personal-workspace-browser/oracle-current-desktop.png)
+and [390px](../../examples/personal-workspace-browser/oracle-current-mobile.png).
