@@ -26,7 +26,7 @@ from ..todos.completion_validation import (
     run_declared_completion_validation_effect,
 )
 from .goal_ref_validation import exact_goal_ref
-from .acceptance_oracle import oracle_versions, run_snapshot_oracle
+from .acceptance_oracle_io import oracle_versions, run_snapshot_oracle
 
 
 _INSPECT_METHOD = "goal.acceptance.inspect"

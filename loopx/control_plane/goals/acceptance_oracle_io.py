@@ -1,4 +1,7 @@
-"""File observations for the existing TypeScript acceptance oracle owner."""
+"""Host filesystem/process IO for the TypeScript acceptance oracle owner.
+
+No configuration, evidence classification or acceptance decision is owned here.
+"""
 
 from __future__ import annotations
 
