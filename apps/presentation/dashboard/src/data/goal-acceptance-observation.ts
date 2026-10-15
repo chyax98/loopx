@@ -75,6 +75,21 @@ export function projectGoalAcceptanceCriteria(contract: Extract<NonNullable<Goal
       else if (receipt.todo_id !== null || contract.status === "partial") state = "partial";
       else state = "accepted";
     }
+    if ((state === "accepted" || state === "partial") && criterion.oracle) {
+      if (criterion.oracle.state === "stale") state = "stale";
+      else if (criterion.oracle.state === "failed") state = "failed";
+      else if (criterion.oracle.state !== "current") state = "unverified";
+    }
     return {...criterion, state};
   });
+}
+
+/** Display freshness only; this does not alter canonical acceptance or gates. */
+export function goalAcceptanceDisplayStatus(contract: Extract<GoalAcceptanceContract, {enabled: true}>) {
+  if (contract.status !== "accepted" && contract.status !== "partial") return contract.status;
+  const criteria = projectGoalAcceptanceCriteria(contract);
+  if (criteria.some(item => item.state === "failed")) return "failed";
+  if (criteria.some(item => item.state === "stale")) return "stale";
+  if (criteria.some(item => item.state === "unverified")) return "unverified";
+  return contract.status;
 }

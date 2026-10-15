@@ -415,6 +415,7 @@ def verify_goal_acceptance(
     agent_id: str | None = None,
     execute: bool = False,
     expected_provider_revision: str | None = None,
+    operation_id: str | None = None,
 ) -> dict[str, Any]:
     """Run the configured acceptance checks against a frozen canonical basis."""
     route = _routing(registry_path, goal_id, runtime_root, agent_id)
@@ -441,7 +442,7 @@ def verify_goal_acceptance(
             **route,
             "expected_provider_revision": basis["provider_revision"],
             "actor_agent_id": None,
-            "operation_id": f"goal-acceptance-verify:{uuid4().hex}",
+            "operation_id": operation_id or f"goal-acceptance-verify:{uuid4().hex}",
             "contract_digest": basis["goal_acceptance_contract"]["digest"],
             "revision": basis["goal_acceptance_contract"]["revision"],
             "results": receipts,

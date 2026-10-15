@@ -414,6 +414,20 @@ and local operator-journey gap; it does not qualify independent authorship,
 semantic resolution, the real correction/adoption episode or full L1. See the
 [operation and rollback guide](../../reference/goal-acceptance-observations.md#owner-pinned-oracle-and-exact-versions).
 
+The proposed local journey now lets a registered Agent prepare that exact check
+plan through the existing typed-action store. Preparation changes neither the
+contract nor the outputs. The owner sees its objective, coverage, outputs and
+local command effect beside the delivery, then adopts and checks in one action;
+JSON import and revision diagnostics remain optional. This is one additional
+owner decision after preparation, not proof that every original request takes
+one interaction. Proposal replay and lost responses use existing native receipts;
+an uncertain execution never automatically reruns commands. Fresh readback
+withdraws historical success when source/output evidence changes, and an applied
+new plan does not revive an older draft. File/SQLite execution, isolated
+PostgreSQL acceptance ownership and packaged SQLite/HTTP/CLI recovery validate
+this author proposal. Scripted Agent preparation does not qualify live model
+preparation, installed App adoption, independent authorship or full L1.
+
 The current host-check observation additionally names its UTC completion time and the declared output versions that remained unchanged before and after those checks. A changed output withdraws even the first return; the evidence detail displays matching records and leaves older or mismatched records unavailable. Stability reuses the acceptance owner's task work digest plus current claim/lifecycle and selected rules/pins/workspace: unrelated canonical commits and observation metadata do not revoke a stable check, while changed work, authorization or validators still reject it. This replaces whole-Goal revision comparison only on this read path; mutation CAS remains intact. The delegation TS owner and read-only Chat/CLI projection add no verifier configuration or independent semantic verdict, and do not close Section 9's independent exact-version acceptance gap.
 
 Packaged desktop, 390px, keyboard/reduced-motion and pagination checks cover these returns and recovery. An isolated production SQLite/HTTP/CLI fixture also rejects changed output, withdraws its list acceptance and restores the original version without launching additional work. [Public-safe fixture views](../../reference/local-delegation.md#inspect-accepted-evidence-and-return) make these states reviewable. These checks do not establish a real objection, independent semantic acceptance, installed native behavior or L1 completion. The existing real correction episode must still be exercised through the packaged UI and independently read back with Section 9's missing/lost-observation cases.

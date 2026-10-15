@@ -81,9 +81,49 @@ promote a provider or fall back to legacy Markdown when canonical reads fail.
 The owner makes three explicit decisions: the objective and its acceptance
 criteria, which existing advancement tasks serve those criteria, and whether to
 enable this governance. The existing Goal authority owns the contract; the
-Dashboard only reads it. No new capability editor or provider is introduced.
+Dashboard presents its checked result and uses the same owner for authorized changes. No new capability editor or provider is introduced.
 
-From the Goal's delivery workspace, inspect the current provider revision:
+For an ordinary delivery, the Agent prepares the technical plan from the stated
+outcome and existing task/file context. The local owner sees its objective,
+criteria, coverage and command effect beside the delivery, then uses **Use plan
+and check** once. A configured contract needs only **Check delivery**. The
+advanced JSON import remains available for technical migration; it is not a
+prerequisite for this path.
+
+Agent preparation uses the existing typed action preview store:
+
+```bash
+loopx --format json goal-acceptance prepare --goal-id example-goal \
+  --agent-id example-agent --document acceptance.json \
+  --operation-id prepare-delivery-check --execute
+```
+
+Here `--execute` persists only the reviewable proposal. Omit it for a read-only
+validation preview. Neither form configures the Goal, approves governance or runs
+commands. The local owner's action applies the described configuration and
+executes its bounded checks; this is the existing trusted local owner surface,
+not an authenticated remote owner decision. Use runtime command names and safe
+relative file references in proposals, rather than machine-specific paths.
+The original operation identity and native receipts recover a lost response.
+Concurrent or repeated apply does not rerun a consumed intent; if a started check
+has no matching native receipt, the result stays uncertain until explicitly
+reconciled. Readback never runs checks. A stored successful receipt cannot
+certify changed files, independent reviewer identity, adoption or Goal completion.
+A later finished/cancelled plan does not resurrect an older draft.
+
+Count the complete task: with an Agent-prepared plan already delivered, the owner
+has one required decision. If the original request still lacks acceptance intent
+or authority, that missing decision is an additional round; preparing a proposal
+alone does not establish a one-round cold-start or live-model experience.
+No-plan/default-off behavior remains unchanged, and no Lark action is introduced.
+
+中文：普通路径由 Agent 根据目标与既有上下文准备方案，负责人在交付处核对要求、覆盖范围和
+执行影响，一次“采用并检查”；已有配置直接“检查交付”。JSON 导入仅保留为高级迁移入口。
+`prepare --execute` 只保存可审阅方案，不修改 Goal 规则、不执行检查。丢失回执先对账，
+不能自动重跑；历史通过不能认证变化后的版本。交互次数从原始意图算起，前置缺失的意图或
+授权不能从计数中省略。此入口沿用可信本机所有者边界，不证明远程身份、独立复核或实际采用。
+
+For advanced CLI configuration, inspect the current provider revision:
 
 ```bash
 loopx --format json goal-acceptance inspect --goal-id example-goal
@@ -126,8 +166,8 @@ owner-approved scope change.
 Unselected work retains its ordinary validation, claims, leases, permissions and
 continuation checks. Selected work cannot edit role/class/status to escape its
 contract. Changes to unrelated work do not stale a selected-work verification;
-changes to selected work do. The dashboard's existing read-only acceptance detail,
-Markdown export and CLI expose coverage without granting new configuration power.
+changes to selected work do. The dashboard's acceptance detail, Markdown export and CLI expose coverage.
+Configuration continues through the same owner-authorized CAS transition.
 No Lark configuration operation is introduced.
 
 **恢复与范围 / Recovery and coverage.** Missing/stale associations trigger scoped
@@ -546,9 +586,9 @@ or permission.
 Local HTTP operations share the same owner through `/api/chat/goal-acceptance`;
 remote/missing authority and stale revisions remain explicit failures.
 
-The packaged regression runs the settings journey against a disposable real
-SQLite/HTTP/CLI source, including changed output, failure/recovery, disable,
-390px and keyboard/reduced-motion:
+The packaged regression runs Agent preparation and the in-place owner decision
+against a disposable real SQLite/HTTP/CLI source, including changed output,
+failure/recovery, optional configuration, disable, 390px and keyboard/reduced-motion:
 
 ```sh
 uv run --extra test python scripts/chat_bundle.py build --install
@@ -560,5 +600,7 @@ installed-App adoption or the live L1 correction episode.
 
 
 Synthetic packaged views of the actual local-owner interaction (not an installed
-App or live team): [desktop](../../examples/personal-workspace-browser/oracle-current-desktop.png)
+App or live team): prepared plan on [desktop](../../examples/personal-workspace-browser/oracle-controls-desktop.png)
+and [390px](../../examples/personal-workspace-browser/oracle-controls-mobile.png);
+current result on [desktop](../../examples/personal-workspace-browser/oracle-current-desktop.png)
 and [390px](../../examples/personal-workspace-browser/oracle-current-mobile.png).

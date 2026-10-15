@@ -6,6 +6,8 @@ from pathlib import Path
 import sys
 
 from loopx.chat_server import ChatHTTPServer, ChatRequestHandler
+from loopx.chat_action_store import ChatActionStore
+from loopx.chat_actions import ChatActionService
 from loopx.control_plane.coordination.runtime_shadow import (
     build_todo_runtime_shadow_projection,
 )
@@ -71,7 +73,7 @@ document = {
         {
             "id": "export",
             "description": "The export matches the expected input",
-            "validation_argv": [sys.executable, "check.py"],
+            "validation_argv": ["python3", "check.py"],
             "validation_timeout_seconds": 5,
             "validation_files": [
                 {
@@ -93,6 +95,10 @@ document = {
 server = ChatHTTPServer(("127.0.0.1", 0), ChatRequestHandler)
 server.registry_path, server.runtime_root = registry, runtime
 server.runtime_root_override, server.verbose = str(runtime), False
+server.selected_goal_id, server.scan_roots, server.limit = None, [], 20
+server.goal_subagent_configuration_enabled = False
+server.action_store = ChatActionStore(runtime / "chat" / "actions")
+server.action_service = ChatActionService(store=server.action_store, registry_path=registry)
 print(
     json.dumps(
         {"port": server.server_port, "registry": str(registry), "runtime": str(runtime)}
