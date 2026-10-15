@@ -240,6 +240,11 @@ for (const provider of providers) {
         validation_argv: ["python3", "check.py"], validation_files: [{path: "check.py", sha256: "a".repeat(64)}],
         oracle: {kind: "owner_pinned_oracle", source_id: "owner-checker", input_refs: [], output_refs: ["output.txt"]}}]});
     assert.equal((await configureGoalAcceptance(store, await configureRequest(store, {document: doc}))).status, "applied");
+    const beforeInvalidInvocation = await head(store);
+    await assert.rejects(configureGoalAcceptance(store, await configureRequest(store, {document: {
+      ...doc, criteria: [{...doc.criteria[0], validation_argv: ["/usr/bin/true", "check.py"]}],
+    }})), /oracle requires/);
+    assert.deepEqual(await head(store), beforeInvalidInvocation, "rejected source invocation must not write canonical state");
     const evidence = {source_id: "owner-checker", source_digest: acceptanceOracleBasis(doc.criteria[0]), checked_at: "2026-01-01T00:00:00Z",
       input_versions: [], output_versions: [{ref: "output.txt", sha256: "b".repeat(64)}]};
     const results = [{criterion_id: "oracle", passed: true, exit_code: 0, oracle_evidence: evidence}];

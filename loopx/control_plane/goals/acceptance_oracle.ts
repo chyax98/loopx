@@ -39,10 +39,21 @@ export function normalizeAcceptanceOracle(value: unknown, criterion: JsonObject)
   requireThat(!input_refs.some(ref => output_refs.includes(ref)), "oracle input and output roles must be distinct");
   const pins = criterion.validation_files as {path: string; sha256: string}[];
   const argv = criterion.validation_argv as string[];
-  requireThat(Array.isArray(pins) && pins.length > 0 && Array.isArray(argv)
-    && pins.some(pin => pin.path === argv[0] && argv[0].includes("/")
-      || pin.path === argv[1] && !argv[1].startsWith("-")),
-  "oracle requires an explicitly pinned checker invoked directly or as the interpreter's script");
+  requireThat(Array.isArray(pins) && pins.length > 0 && Array.isArray(argv),
+    "oracle requires an explicitly pinned checker");
+  // This is the supported invocation grammar, not interpreter attestation.
+  // Arbitrary commands may ignore argv[1]; only Python's immediate script
+  // position has that meaning here. Other runtimes can execute a pinned entry
+  // point directly. The interpreter/environment remain trusted host inputs.
+  const executableName = argv[0]?.split(/[\\/]/).at(-1) ?? "";
+  const hostInterpreterPath = executableName === argv[0] || /^(?:\/|[A-Za-z]:[\\/])/.test(argv[0] ?? "");
+  const pythonScript = hostInterpreterPath && /^python(?:3(?:\.\d+)?)?(?:\.exe)?$/.test(executableName)
+    && typeof argv[1] === "string" && !argv[1].startsWith("-")
+    && pins.some(pin => pin.path === argv[1]);
+  const directSource = typeof argv[0] === "string" && argv[0].includes("/")
+    && pins.some(pin => pin.path === argv[0]);
+  requireThat(directSource || pythonScript,
+    "oracle requires a pinned relative executable path containing '/' or a pinned script immediately after a supported Python interpreter; arbitrary commands and interpreter options are unsupported");
   requireThat(!pins.some(pin => input_refs.includes(pin.path) || output_refs.includes(pin.path)),
     "oracle source and checked artifacts must be distinct");
   return {kind: "owner_pinned_oracle", source_id: row.source_id, input_refs, output_refs};

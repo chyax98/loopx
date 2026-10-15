@@ -477,12 +477,21 @@ inferring independent acceptance from a worker's name, report or artifact hash:
 
 Add this object to a criterion in the existing document format. That criterion
 must explicitly pin the invoked checker in `validation_files`, with its actual
-SHA-256, and invoke that file directly or as the interpreter's script argument.
-For example, use `validation_argv: ["python3", "checks/export.py"]` with a pin for
-`checks/export.py`. Inline `-c` commands cannot attest a different pinned file. A directly executed
-checker needs a relative path containing `/` (for example `checks/export`), not
-a bare name resolved through `PATH`; an interpreter script argument cannot be an
-option beginning with `-`.
+SHA-256, and invoke that file directly or as Python's immediate script argument.
+The supported interpreter names are `python`, `python3`, and versioned
+`python3.<digits>`, optionally ending in `.exe`; absolute host paths to those
+interpreters are allowed. Relative interpreter wrappers must themselves be
+pinned and directly invoked; they cannot borrow Python's script-argument rule.
+For example, use
+`validation_argv: ["python3", "checks/export.py"]` with a pin for
+`checks/export.py`. Interpreter options before the script (including `-c`, `-m`
+and `--`) are unsupported. Arbitrary commands such as `true checks/export.py`
+or `cat checks/export.py` cannot attest execution of that pinned source and are
+rejected before configuration is written. Script arguments after the file are
+allowed. Other runtimes can use a directly executed pinned entry point with a
+relative path containing `/` (for example `checks/export`), not a bare name
+resolved through `PATH`. This grammar does not authenticate the local interpreter
+binary, which remains part of the trusted host environment.
 Declare every input/output file whose version the receipt is meant to cover;
 there must be at least one output. Source, input and output roles are distinct.
 All refs are bounded repository-relative files; symlinks and unavailable files

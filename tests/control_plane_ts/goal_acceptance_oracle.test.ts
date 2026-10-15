@@ -7,6 +7,11 @@ test("oracle requires a pinned invoked source and distinct explicit artifact rol
   for (const change of [
     {validation_files: []}, {validation_argv: ["python3", "-c", "pass"]},
     {validation_argv: ["check.py"]},
+    {validation_argv: ["/usr/bin/true", "check.py"]},
+    {validation_argv: ["/usr/bin/cat", "check.py"]},
+    {validation_argv: ["not-python3", "check.py"]},
+    {validation_argv: ["tools/python3", "check.py"]},
+    {validation_argv: ["python3", "--", "check.py"]},
     {validation_argv: ["python3", "-c", "pass"], validation_files: [{path: "-c", sha256: "a".repeat(64)}]},
     {oracle: {kind: "owner_pinned_oracle", source_id: "owner-checker", input_refs: ["output.txt"], output_refs: ["output.txt"]}},
     {oracle: {kind: "owner_pinned_oracle", source_id: "owner-checker", input_refs: [], output_refs: ["../output.txt"]}},
@@ -14,6 +19,19 @@ test("oracle requires a pinned invoked source and distinct explicit artifact rol
     const doc = document();
     assert.throws(() => normalizeGoalAcceptanceDocument({...doc, criteria: [{...doc.criteria[0], ...change}]}));
   }
+});
+test("oracle admits explicit Python script forms and pinned direct executables", () => {
+  const doc = document(), criterion = doc.criteria[0];
+  for (const executable of ["python", "python3", "/opt/runtime/bin/python3.13", "C:\\Python313\\python.exe"]) {
+    assert.doesNotThrow(() => normalizeGoalAcceptanceDocument({...doc, criteria: [{...criterion, validation_argv: [executable, "check.py", "--script-argument"]}]}));
+  }
+  assert.doesNotThrow(() => normalizeGoalAcceptanceDocument({...doc, criteria: [{...criterion,
+    validation_argv: ["checks/verify"], validation_files: [{path: "checks/verify", sha256: "a".repeat(64)}]}]}));
+});
+test("ordinary criteria keep their command and canonical shape outside oracle invocation rules", () => {
+  const doc = document(), {oracle: _oracle, ...criterion} = doc.criteria[0];
+  const ordinary = {...doc, criteria: [{...criterion, validation_argv: ["/usr/bin/true", "check.py"]}]};
+  assert.deepEqual(normalizeGoalAcceptanceDocument(ordinary), ordinary);
 });
 test("success cannot be supplied without the exact configured oracle and checked refs", () => {
   const criterion = document().criteria[0];

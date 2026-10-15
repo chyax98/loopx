@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import {spawn, execFileSync} from "node:child_process";
 import {createInterface} from "node:readline";
-import {mkdtemp, mkdir, rm, writeFile} from "node:fs/promises";
+import {mkdtemp, mkdir, readFile, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {resolve} from "node:path";
 import {resolveTestPython} from "../../scripts/test-python.mjs";
@@ -46,11 +46,28 @@ try {
     const field = document.querySelector('.delivery-acceptance-contract input[type="file"]');
     return field instanceof HTMLInputElement && !field.disabled;
   });
+  const read = () => JSON.parse(execFileSync(resolveTestPython(), ["-m", "loopx.cli", "--format", "json", "--registry", authority.registry, "--runtime-root", authority.runtime,
+    "goal-acceptance", "inspect", "--goal-id", "multi-agent-projection"], {cwd: repoRoot, encoding: "utf8"}));
+  const initial = read();
+  const invalid = JSON.parse(await readFile(resolve(root, "owner-contract.json"), "utf8"));
+  invalid.criteria[0].validation_argv = ["/usr/bin/true", "check.py"];
+  await writeFile(resolve(root, "invalid-contract.json"), JSON.stringify(invalid));
+  await panel.locator('input[type="file"]').setInputFiles(resolve(root, "invalid-contract.json"));
+  const rejectedSave = page.waitForResponse(response => response.url().includes("/api/chat/goal-acceptance") && response.request().method() === "POST");
+  await panel.getByRole("button", {name: "保存合同", exact: true}).click();
+  assert.equal((await rejectedSave).status(), 409);
+  await panel.getByRole("alert").waitFor();
+  assert.deepEqual(read(), initial, "rejected invocation must not configure a contract or create evidence");
+  await panel.getByRole("button", {name: "读回当前合同", exact: true}).click();
+  await page.waitForFunction(() => {
+    const field = document.querySelector('.delivery-acceptance-contract input[type="file"]');
+    return field instanceof HTMLInputElement && !field.disabled;
+  });
+  const expectedError = context.errors.findIndex(value => value === "Failed to load resource: the server responded with a status of 409 (Conflict)");
+  if (expectedError >= 0) context.errors.splice(expectedError, 1);
   await panel.locator('input[type="file"]').setInputFiles(resolve(root, "owner-contract.json"));
   await panel.getByRole("button", {name: "保存合同", exact: true}).click();
   await panel.getByText("当前 Goal 的合同已保存，尚未执行检查。", {exact: true}).waitFor();
-  const read = () => JSON.parse(execFileSync(resolveTestPython(), ["-m", "loopx.cli", "--format", "json", "--registry", authority.registry, "--runtime-root", authority.runtime,
-    "goal-acceptance", "inspect", "--goal-id", "multi-agent-projection"], {cwd: repoRoot, encoding: "utf8"}));
   assert.equal(read().goal_acceptance_contract.criteria[0].oracle.state, "unverified");
   const run = panel.getByRole("button", {name: "运行已配置的检查", exact: true});
   await run.click();
@@ -80,7 +97,7 @@ try {
   await panel.getByText("当前合同已停用。", {exact: true}).waitFor();
   assert.equal(read().goal_acceptance_contract.enabled, false);
   assert.deepEqual(context.errors.filter(value => !value.includes("404")), []);
-  console.log(JSON.stringify({status: "PASS", boundary: "Packaged UI; synthetic workspace directory with actual SQLite/HTTP/CLI source; no installed App or live model claim", checks: ["discover", "import/save", "explicit checks", "exact readback", "changed output", "failure/recovery", "disable", "390px", "keyboard/reduced-motion"]}));
+  console.log(JSON.stringify({status: "PASS", boundary: "Packaged UI; synthetic workspace directory with actual SQLite/HTTP/CLI source; no installed App or live model claim", checks: ["discover", "invalid invocation refusal/readback/recovery", "import/save", "explicit checks", "exact readback", "changed output", "failure/recovery", "disable", "390px", "keyboard/reduced-motion"]}));
 } finally {
   await context?.close(); await browser?.close(); server?.kill("SIGTERM");
   lines.close(); child.kill("SIGTERM");

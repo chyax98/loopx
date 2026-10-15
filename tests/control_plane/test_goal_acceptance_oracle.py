@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import shutil
 import sys
 import pytest
 from test_goal_acceptance_cli import acceptance_goal as acceptance_goal
@@ -264,4 +265,112 @@ def test_oracle_rejects_changed_or_missing_files_and_timeout(acceptance_goal, ch
     assert (
         cli("inspect")[1]["goal_acceptance_contract"]["criteria"][0]["oracle"]["state"]
         != "current"
+    )
+
+
+def test_pinned_file_argument_is_not_an_executed_checker(acceptance_goal):
+    non_interpreter = shutil.which("true")
+    if non_interpreter is None:
+        pytest.skip("POSIX true executable is required for this invocation regression")
+    project, document, cli, _ = acceptance_goal
+    checker = project / "reject.py"
+    checker.write_text("raise SystemExit(17)\n")
+    (project / "artifact.txt").write_text("unchanged output")
+    raw = json.loads(document.read_text())
+    criterion = raw["criteria"][0]
+    criterion.update(
+        validation_argv=[sys.executable, "reject.py"],
+        validation_files=[
+            {
+                "path": "reject.py",
+                "sha256": hashlib.sha256(checker.read_bytes()).hexdigest(),
+            }
+        ],
+        oracle={
+            "kind": "owner_pinned_oracle",
+            "source_id": "rejecting-checker",
+            "input_refs": [],
+            "output_refs": ["artifact.txt"],
+        },
+    )
+    document.write_text(json.dumps(raw))
+    before = cli("inspect")[1]
+    code, configured = cli(
+        "configure",
+        "--document",
+        str(document),
+        "--expected-provider-revision",
+        before["provider_revision"],
+        "--execute",
+    )
+    assert code == 0, configured
+    code, rejected = cli("verify", "--execute")
+    assert code == 1 and rejected["checks_passed"] is False, rejected
+    result = rejected["goal_acceptance_contract"]["verification"]["results"][0]
+    assert result["exit_code"] == 17 and "oracle_evidence" not in result
+    before = cli("inspect")[1]
+    criterion["validation_argv"] = [non_interpreter, "reject.py"]
+    document.write_text(json.dumps(raw))
+    code, refused = cli(
+        "configure",
+        "--document",
+        str(document),
+        "--expected-provider-revision",
+        before["provider_revision"],
+        "--execute",
+    )
+    assert code == 1, refused
+    assert refused["error"] == "goal_acceptance_invalid_request"
+    assert cli("inspect")[1] == before
+
+
+def test_pinned_direct_executable_checker_runs_from_snapshot(acceptance_goal):
+    if sys.platform == "win32":
+        pytest.skip(
+            "Direct POSIX shebang execution is not a Windows invocation contract"
+        )
+    project, document, cli, _ = acceptance_goal
+    checker = project / "checks" / "verify"
+    checker.parent.mkdir()
+    checker.write_text(
+        f"#!{sys.executable}\nfrom pathlib import Path\nassert Path('artifact.txt').read_text() == 'accepted'\n"
+    )
+    checker.chmod(0o755)
+    (project / "artifact.txt").write_text("accepted")
+    raw = json.loads(document.read_text())
+    raw["criteria"][0].update(
+        validation_argv=["checks/verify"],
+        validation_files=[
+            {
+                "path": "checks/verify",
+                "sha256": hashlib.sha256(checker.read_bytes()).hexdigest(),
+            }
+        ],
+        oracle={
+            "kind": "owner_pinned_oracle",
+            "source_id": "direct-checker",
+            "input_refs": [],
+            "output_refs": ["artifact.txt"],
+        },
+    )
+    document.write_text(json.dumps(raw))
+    before = cli("inspect")[1]
+    code, configured = cli(
+        "configure",
+        "--document",
+        str(document),
+        "--expected-provider-revision",
+        before["provider_revision"],
+        "--execute",
+    )
+    assert code == 0, configured
+    code, checked = cli("verify", "--execute")
+    assert code == 0 and checked["checks_passed"] is True, checked
+    assert (
+        "oracle_evidence"
+        in checked["goal_acceptance_contract"]["verification"]["results"][0]
+    )
+    assert (
+        cli("inspect")[1]["goal_acceptance_contract"]["criteria"][0]["oracle"]["state"]
+        == "current"
     )
